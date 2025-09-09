@@ -1,10 +1,11 @@
 using namespace std;
 
 //Создание списка на языке C++
-list <string> li {"'a','2','b','4','c','6'"};
+list <string> li {"'q','2','w','4','e','6'"};
 
 //Создание stack на языке C++
 stack <string> stack;
-stack.push("a");
-stack.push("b");
+stack.push("z");
+stack.push("x");
+
 stack.push("c");
