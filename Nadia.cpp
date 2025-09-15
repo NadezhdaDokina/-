@@ -1,11 +1,15 @@
+#include <iostream>
+#include <list>
 using namespace std;
 
-//Создание списка на языке C++
-list <string> li {"'q','2','w','4','e','6'"};
 
-//Создание stack на языке C++
-stack <string> stack;
-stack.push("z");
-stack.push("x");
+int main()
+{
+    list<int> listData;
+    
+    listData.push_back(5);
+    listData.push_back(15);
+    listData.push_back(25);
+    listData.push_back(35);
 
-stack.push("c");
+    return 0;
