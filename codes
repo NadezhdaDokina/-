@@ -108,12 +108,131 @@ if __name__ == "__main__":
 Отсортированный массив: [1, 2, 3, 4, 5]
 
 
-
-
 поиск скачками
+
+import math
+
+def jump_search(arr, x):
+    # Шаг 1: Определяем размер шага
+    n = len(arr)
+    step = int(math.sqrt(n))
+
+    # Шаг 2: Находим блок, в котором может находиться искомый элемент
+    prev = 0
+    while arr[min(step, n) - 1] < x:
+        prev = step
+        step += int(math.sqrt(n))
+        if prev >= n:
+            return -1
+
+    # Шаг 3: Выполняем линейный поиск в найденном блоке
+    while arr[prev] < x:
+        prev += 1
+        if prev == min(step, n):
+            return -1
+
+    # Шаг 4: Проверяем, найден ли элемент
+    if arr[prev] == x:
+        return prev
+    return -1
+
+# Пример использования
+if __name__ == "__main__":
+    arr = [0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610]
+    x = 55
+    result = jump_search(arr, x)
+    if result != -1:
+        print(f"Элемент {x} найден на позиции {result}")
+    else:
+        print(f"Элемент {x} не найден в массиве")
+
+
+Результаты работы кода:
+Элемент 55 найден на позиции 10
+
 экспоненциальный поиск
+
+def exponential_search(arr, x):
+    # Шаг 1: Находим диапазон, в котором может находиться искомый элемент
+    n = len(arr)
+    if arr[0] == x:
+        return 0
+    i = 1
+    while i < n and arr[i] <= x:
+        i *= 2
+
+    # Шаг 2: Выполняем бинарный поиск в найденном диапазоне
+    left = i // 2
+    right = min(i, n - 1)
+    while left <= right:
+        mid = (left + right) // 2
+        if arr[mid] == x:
+            return mid
+        elif arr[mid] < x:
+            left = mid + 1
+        else:
+            right = mid - 1
+
+    # Шаг 3: Если элемент не найден, возвращаем -1
+    return -1
+
+# Пример использования
+if __name__ == "__main__":
+    arr = [0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610]
+    x = 55
+    result = exponential_search(arr, x)
+    if result != -1:
+        print(f"Элемент {x} найден на позиции {result}")
+    else:
+        print(f"Элемент {x} не найден в массиве")
+
+
+Результаты работы предложенного кода:
+Элемент 55 найден на позиции 10
 
 
 тернарный поиск
 
 
+def ternary_search(arr, x):
+    # Шаг 1: Определяем начальные границы поиска
+    left = 0
+    right = len(arr) - 1
+
+    # Шаг 2: Выполняем тернарный поиск
+    while right >= left:
+        # Определяем две точки среза
+        mid1 = left + (right - left) // 3
+        mid2 = right - (right - left) // 3
+
+        # Проверяем, в какой части массива находится искомый элемент
+        if arr[mid1] == x:
+            return mid1
+        if arr[mid2] == x:
+            return mid2
+
+        # Обновляем границы поиска
+        if x < arr[mid1]:
+            right = mid1 - 1
+        elif x > arr[mid2]:
+            left = mid2 + 1
+        else:
+            left = mid1 + 1
+            right = mid2 - 1
+
+    # Шаг 3: Если элемент не найден, возвращаем -1
+    return -1
+
+# Пример использования
+if __name__ == "__main__":
+    arr = [0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610]
+    x = 55
+    result = ternary_search(arr, x)
+    if result != -1:
+        print(f"Элемент {x} найден на позиции {result}")
+    else:
+        print(f"Элемент {x} не найден в массиве")
+
+
+Результаты работы кода:
+Элемент 55 найден на позиции 10
