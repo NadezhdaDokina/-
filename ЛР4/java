@@ -1,1 +1,75 @@
+public class VowelCounter {
+
+
+    /**
+     * Рекурсивно подсчитывает количество гласных букв в строке.
+     *
+     * @param str   входная строка
+     * @param index текущий индекс обрабатываемого символа (начинается с 0)
+     * @return количество гласных букв в строке
+     */
+    public static int countVowels(String str, int index) {
+        // Базовый случай: достигли конца строки
+        if (index >= str.length()) {
+            return 0;
+        }
+
+        // Получаем текущий символ и приводим к нижнему регистру
+        char currentChar = Character.toLowerCase(str.charAt(index));
+
+
+        // Проверяем, является ли символ гласной
+        boolean isVowel = (currentChar == 'a' || 
+                          currentChar == 'e' ||
+                          currentChar == 'i' ||
+                          currentChar == 'o' ||
+                          currentChar == 'u');
+
+        // Рекурсивный случай
+        if (isVowel) {
+            // Если гласная — прибавляем 1 и переходим к следующему символу
+            return 1 + countVowels(str, index + 1);
+        } else {
+            // Если не гласная — просто переходим к следующему символу
+            return countVowels(str, index + 1);
+        }
+    }
+
+    // Упрощённый вызов (без указания индекса)
+    public static int countVowels(String str) {
+        return countVowels(str, 0);
+    }
+
+    public static void main(String[] args) {
+        // Тестовые примеры
+        String[] testStrings = {
+            "Hello",
+            "Programming is fun",
+            "xyz",
+            "AEIOU",
+            "",
+            "The quick brown fox jumps over the lazy dog"
+        };
+
+        for (String testStr : testStrings) {
+            int result = countVowels(testStr);
+            System.out.println("'" + testStr + "' → " + result + " гласных");
+        }
+    }
+}
+
+
+
+    // Пример использования
+    public static void main(String[] args) {
+        String text = "Hello World";
+        int result = countVowels(text);
+        System.out.println("Количество гласных: " + result); // Вывод: 3
+    }
+}
+
+
+
+Вывод
+Количество гласных: 3
 
