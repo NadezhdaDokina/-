@@ -1,1 +1,20 @@
+#include <iostream>
+#include <vector>
+
+int recursiveSum(const std::vector<int>& arr, int index) {
+    // Базовый случай: если индекс вышел за границы массива, возвращаем 0
+    if (index >= arr.size()) {
+        return 0;
+    }
+    
+    // Рекурсивный случай: текущий элемент + сумма оставшихся элементов
+    return arr[index] + recursiveSum(arr, index + 1);
+}
+
+int main() {
+    std::vector<int> numbers = {1, 2, 3, 4, 5};
+    int sum = recursiveSum(numbers, 0);
+    std::cout << "Сумма элементов массива: " << sum << std::endl;
+    return 0;
+}
 
