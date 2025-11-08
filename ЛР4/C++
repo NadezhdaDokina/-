@@ -1,20 +1,42 @@
 #include <iostream>
-#include <vector>
+#include <string>
+#include <cctype>  // для tolower
 
-int recursiveSum(const std::vector<int>& arr, int index) {
-    // Базовый случай: если индекс вышел за границы массива, возвращаем 0
-    if (index >= arr.size()) {
+// Функция проверки, является ли символ гласной
+bool isVowel(char ch) {
+    char lowerCh = std::tolower(ch);
+    return (lowerCh == 'a' || lowerCh == 'e' || 
+            lowerCh == 'i' || lowerCh == 'o' ||
+            lowerCh == 'u');
+}
+
+// Рекурсивная функция подсчёта гласных
+int countVowels(const std::string& str, int index = 0) {
+    // Базовый случай: достигли конца строки
+    if (index >= str.length()) {
         return 0;
     }
     
-    // Рекурсивный случай: текущий элемент + сумма оставшихся элементов
-    return arr[index] + recursiveSum(arr, index + 1);
+    // Рекурсивный случай:
+    // Если текущий символ — гласная, прибавляем 1 к результату рекурсивного вызова
+    if (isVowel(str[index])) {
+        return 1 + countVowels(str, index + 1);
+    } else {
+        // Иначе просто продолжаем рекурсию без прибавления
+        return countVowels(str, index + 1);
+    }
 }
 
 int main() {
-    std::vector<int> numbers = {1, 2, 3, 4, 5};
-    int sum = recursiveSum(numbers, 0);
-    std::cout << "Сумма элементов массива: " << sum << std::endl;
+    std::string input;
+    
+    std::cout << "Введите строку: ";
+    std::getline(std::cin, input);
+    
+    int vowelCount = countVowels(input);
+    std::cout << "Количество гласных букв: " << vowelCount << std::endl;
+    
     return 0;
 }
 
+//Пример использования
