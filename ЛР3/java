@@ -1,1 +1,326 @@
+БИНАРНАЯ КУЧА
 
+import java.util.PriorityQueue;
+
+public class BinaryHeap {
+    public static void main(String[] args) {
+        // Создаем пустую очередь приоритетов (по умолчанию min-куча)
+        PriorityQueue<Integer> pq = new PriorityQueue<>();
+        
+        // Добавляем элементы
+        pq.add(10);
+        pq.add(8);
+        pq.add(15);
+        
+        // Получаем минимальный элемент
+        System.out.println("Min element: " + pq.peek());
+        
+        // Удаляем минимальный элемент
+        int smallest = pq.poll();
+        System.out.println("Popped smallest element: " + smallest);
+    }
+}
+
+
+
+
+
+БИНОМИНАЛЬНАЯ КУЧА
+
+import java.util.ArrayList;
+import java.util.List;
+
+class Node {
+    int key;
+    List<Node> children;
+    int degree;
+
+    public Node(int key) {
+        this.key = key;
+        this.children = new ArrayList<>();
+        this.degree = 0;
+    }
+}
+
+class BinomialHeap {
+    private List<Node> trees;
+
+    public BinomialHeap() {
+        trees = new ArrayList<>();
+    }
+
+    public void insert(int key) {
+        Node newNode = new Node(key);
+        BinomialHeap singleNodeHeap = new BinomialHeap();
+        singleNodeHeap.trees.add(newNode);
+        union(singleNodeHeap);
+    }
+
+    private void union(BinomialHeap other) {
+        List<Node> resultTrees = new ArrayList<>();
+        int i = 0, j = 0;
+        while (i < trees.size() && j < other.trees.size()) {
+            Node currentTreeA = trees.get(i);
+            Node currentTreeB = other.trees.get(j);
+            if (currentTreeA.degree < currentTreeB.degree) {
+                resultTrees.add(currentTreeA);
+                i++;
+            } else if (currentTreeA.degree > currentTreeB.degree) {
+                resultTrees.add(currentTreeB);
+                j++;
+            } else {
+                Node mergedTree = mergeTrees(currentTreeA, currentTreeB);
+                resultTrees.add(mergedTree);
+                i++; j++;
+            }
+        }
+        while (i < trees.size()) {
+            resultTrees.add(trees.get(i));
+            i++;
+        }
+        while (j < other.trees.size()) {
+            resultTrees.add(other.trees.get(j));
+            j++;
+        }
+        trees = resultTrees;
+    }
+
+    private Node mergeTrees(Node a, Node b) {
+        if (a.key > b.key) {
+            Node temp = a;
+            a = b;
+            b = temp;
+        }
+        b.children.add(a);
+        a.degree++;
+        return b;
+    }
+
+    public int extractMin() throws Exception {
+        if (trees.isEmpty())
+            throw new Exception("Heap is empty");
+        Node minNode = null;
+        for (Node tree : trees) {
+            if (minNode == null || tree.key < minNode.key)
+                minNode = tree;
+        }
+        int index = trees.indexOf(minNode);
+        trees.remove(index);
+        BinomialHeap newHeap = new BinomialHeap();
+        for (Node child : minNode.children) {
+            newHeap.insert(child.key);
+        }
+        union(newHeap);
+        return minNode.key;
+    }
+
+    public static void main(String[] args) throws Exception {
+        BinomialHeap bh = new BinomialHeap();
+        bh.insert(10);
+        bh.insert(5);
+        bh.insert(15);
+        System.out.println(bh.extractMin());  // Выведет 5
+    }
+}
+
+
+
+
+КУЧА ФИБОНАЧЧИ
+
+import java.util.*;
+
+class FibNode<T extends Comparable<T>> {
+    T key;
+    List<FibNode<T>> children;
+    boolean marked;
+    FibNode<T> parent;
+    int degree;
+
+    public FibNode(T key) {
+        this.key = key;
+        this.children = new LinkedList<>();
+        this.marked = false;
+        this.parent = null;
+        this.degree = 0;
+    }
+}
+
+class FibonacciHeap<T extends Comparable<T>> {
+    private FibNode<T> minNode;
+    private int numNodes;
+
+    public FibonacciHeap() {
+        this.minNode = null;
+        this.numNodes = 0;
+    }
+
+    public void insert(T key) {
+        FibNode<T> newNode = new FibNode<>(key);
+        addToRootList(newNode);
+        updateMinNodeIfNeeded(newNode);
+        numNodes++;
+    }
+
+    private void link(FibNode<T> parent, FibNode<T> child) {
+        child.parent = parent;
+        parent.children.add(child);
+        parent.degree++;
+    }
+
+    private void cutAndCascadeCut(FibNode<T> parent, FibNode<T> child) {
+        removeChildFromParent(parent, child);
+        addToRootList(child);
+        child.marked = false;
+        if (parent.parent != null) {
+            if (!parent.marked) {
+                parent.marked = true;
+            } else {
+                cutAndCascadeCut(parent.parent, parent);
+            }
+        }
+    }
+
+    private void consolidate() {
+        Map<Integer, FibNode<T>> degreeMap = new HashMap<>();
+        List<FibNode<T>> roots = collectRoots();
+        for (FibNode<T> node : roots) {
+            int degree = node.degree;
+            while (degreeMap.containsKey(degree)) {
+                FibNode<T> existingNode = degreeMap.get(degree);
+                if (node.key.compareTo(existingNode.key) > 0) {
+                    link(existingNode, node);
+                    node = existingNode;
+                } else {
+                    link(node, existingNode);
+                }
+                degreeMap.remove(degree++);
+            }
+            degreeMap.put(degree, node);
+        }
+        minNode = null;
+        for (FibNode<T> node : degreeMap.values()) {
+            addToRootList(node);
+            updateMinNodeIfNeeded(node);
+        }
+    }
+
+    private List<FibNode<T>> collectRoots() {
+        List<FibNode<T>> roots = new ArrayList<>();
+        if (minNode != null) {
+            roots.add(minNode);
+            FibNode<T> current = minNode;
+            do {
+                current = current.children.get(0); // Предполагается наличие первого ребёнка
+                if (current != null) {
+                    roots.add(current);
+                }
+            } while (current != minNode);
+        }
+        return roots;
+    }
+
+    private void removeChildFromParent(FibNode<T> parent, FibNode<T> child) {
+        parent.children.remove(child);
+        parent.degree--;
+    }
+
+    private void addToRootList(FibNode<T> node) {
+        if (minNode == null) {
+            minNode = node;
+        } else {
+            node.parent = null;
+            minNode.children.add(node);
+            updateMinNodeIfNeeded(node);
+        }
+    }
+
+    private void updateMinNodeIfNeeded(FibNode<T> node) {
+        if (minNode == null || node.key.compareTo(minNode.key) < 0) {
+            minNode = node;
+        }
+    }
+
+    public T findMin() {
+        return minNode != null ? minNode.key : null;
+    }
+
+    public T extractMin() {
+        T minValue = findMin();
+        if (minNode != null) {
+            for (FibNode<T> child : minNode.children) {
+                addToRootList(child);
+            }
+            removeChildFromParent(null, minNode);
+            consolidate();
+            numNodes--;
+        }
+        return minValue;
+    }
+
+    public void decreaseKey(FibNode<T> node, T newKey) {
+        if (newKey.compareTo(node.key) >= 0) {
+            throw new IllegalArgumentException("New key must be less than the old one.");
+        }
+        node.key = newKey;
+        FibNode<T> parent = node.parent;
+        if (parent != null && node.key.compareTo(parent.key) < 0) {
+            cutAndCascadeCut(parent, node);
+        }
+        if (node.key.compareTo(minNode.key) < 0) {
+            minNode = node;
+        }
+    }
+
+    public static void main(String[] args) {
+        FibonacciHeap<Integer> fibHeap = new FibonacciHeap<>();
+        fibHeap.insert(10);
+        fibHeap.insert(5);
+        fibHeap.insert(15);
+        System.out.println(fibHeap.findMin());     // Выведет 5
+        System.out.println(fibHeap.extractMin());  // Выведет 5
+    }
+}
+
+
+
+
+
+ХЭШ-ТАБЛИЦА
+
+import java.util.HashMap;
+
+// Простая реализация хэш-таблицы с использованием стандартного HashMap
+public class HashTable<K, V> {
+    private final HashMap<K, V> map;
+
+    public HashTable() {
+        this.map = new HashMap<>();
+    }
+
+    public void put(K key, V value) {
+        map.put(key, value);
+    }
+
+    public V get(K key) {
+        return map.get(key);
+    }
+
+    public boolean contains(K key) {
+        return map.containsKey(key);
+    }
+
+    public void remove(K key) {
+        map.remove(key);
+    }
+
+    public static void main(String[] args) {
+        HashTable<String, Integer> ht = new HashTable<>();
+        ht.put("apple", 10);
+        ht.put("banana", 20);
+        System.out.println(ht.get("apple"));  // выведет 10
+        System.out.println(ht.contains("cherry"));  // выведет false
+        ht.remove("banana");
+        System.out.println(ht.get("banana"));  // выведет null
+    }
+}
