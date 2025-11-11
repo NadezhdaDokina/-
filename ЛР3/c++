@@ -1,1 +1,287 @@
+БИНАРНАЯ КУЧА
 
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    vector<int> vec {10, 8, 15};
+    
+    // Преобразуем вектор в кучу (по умолчанию max-куча)
+    make_heap(vec.begin(), vec.end());
+    
+    // Минимальное преобразование в min-кучу
+    sort_heap(vec.begin(), vec.end()); // Приводит к сортировке массива, что аналогично min-кучному порядку
+    
+    cout << "Min element: " << vec.front() << endl;
+    
+    // Удаляем минимум и восстанавливаем структуру кучи
+    pop_heap(vec.begin(), vec.end()); // Перемещает наибольший элемент в конец вектора
+    vec.pop_back();                   // Физически удаляет последний элемент
+    
+    return 0;
+}
+
+
+
+БИНОМИНАЛЬНАЯ КУЧА
+
+#include <iostream>
+#include <vector>
+
+struct Node {
+    int key;
+    std::vector<Node*> children;
+    int degree;
+
+    Node(int k): key(k), degree(0) {}
+};
+
+void mergeTrees(Node*& t1, Node*& t2) {
+    if (t1->key > t2->key) std::swap(t1, t2);
+    t2->children.push_back(t1);
+    t1->degree++;
+    t1 = t2;
+}
+
+class BinomialHeap {
+private:
+    std::vector<Node*> trees;
+
+public:
+    void insert(int key) {
+        Node* newNode = new Node(key);
+        BinomialHeap tempHeap;
+        tempHeap.trees.push_back(newNode);
+        unionHeaps(*this, tempHeap);
+    }
+
+    void unionHeaps(BinomialHeap& first, BinomialHeap second) {
+        std::vector<Node*> combined(first.trees.size() + second.trees.size());
+        auto it = std::merge(first.trees.begin(), first.trees.end(),
+                             second.trees.begin(), second.trees.end(),
+                             combined.begin(),
+                             [](const Node* a, const Node* b){return a->degree < b->degree;});
+        combined.resize(it - combined.begin());
+        std::vector<Node*> res;
+        for (size_t i = 0; i < combined.size(); ++i) {
+            if (i+1 < combined.size() && combined[i]->degree == combined[i+1]->degree) {
+                mergeTrees(combined[i], combined[i+1]);
+                continue;
+            }
+            res.push_back(combined[i]);
+        }
+        first.trees.swap(res);
+    }
+
+    int extractMin() {
+        if (trees.empty()) throw std::runtime_error("Heap is empty");
+        Node* minNode = nullptr;
+        size_t idx = 0;
+        for (size_t i = 0; i < trees.size(); ++i) {
+            if (!minNode || trees[i]->key < minNode->key) {
+                minNode = trees[i];
+                idx = i;
+            }
+        }
+        trees.erase(trees.begin() + idx);
+        BinomialHeap newHeap;
+        for (auto child : minNode->children) {
+            newHeap.insert(child->key);
+        }
+        unionHeaps(*this, newHeap);
+        delete minNode;
+        return minNode->key;
+    }
+};
+
+int main() {
+    BinomialHeap bh;
+    bh.insert(10);
+    bh.insert(5);
+    bh.insert(15);
+    std::cout << bh.extractMin() << std::endl;  // Выведет 5
+    return 0;
+}
+
+
+
+КУЧА ФИБОНАЧЧИ
+
+#include <iostream>
+#include <list>
+#include <map>
+
+template<typename T>
+class FibNode {
+public:
+    T key;
+    bool marked;
+    int degree;
+    std::list<FibNode<T>*> children;
+    FibNode<T>* parent;
+
+    FibNode(const T& key) : key(key), marked(false), degree(0), parent(nullptr) {}
+};
+
+template<typename T>
+class FibonacciHeap {
+private:
+    FibNode<T>* minNode;
+    int numNodes;
+
+public:
+    FibonacciHeap() : minNode(nullptr), numNodes(0) {}
+
+    void insert(const T& key) {
+        FibNode<T>* newNode = new FibNode<T>(key);
+        if (minNode == nullptr) {
+            minNode = newNode;
+        } else {
+            link(minNode, newNode);
+            if (newNode->key < minNode->key) {
+                minNode = newNode;
+            }
+        }
+        numNodes++;
+    }
+
+    T findMin() {
+        return minNode ? minNode->key : T{};
+    }
+
+    T extractMin() {
+        T minValue = findMin();
+        if (minNode) {
+            for (auto child : minNode->children) {
+                child->parent = nullptr;
+                link(minNode, child);
+            }
+            minNode->children.clear();
+            consolidate();
+            numNodes--;
+        }
+        return minValue;
+    }
+
+    void decreaseKey(FibNode<T>* node, const T& newKey) {
+        if (newKey >= node->key) {
+            throw std::invalid_argument("New key must be smaller than the old one");
+        }
+        node->key = newKey;
+        FibNode<T>* parent = node->parent;
+        if (parent && node->key < parent->key) {
+            cutAndCascadeCut(parent, node);
+        }
+        if (node->key < minNode->key) {
+            minNode = node;
+        }
+    }
+
+private:
+    void link(FibNode<T>* parent, FibNode<T>* child) {
+        child->parent = parent;
+        parent->children.push_back(child);
+        parent->degree++;
+    }
+
+    void cutAndCascadeCut(FibNode<T>* parent, FibNode<T>* child) {
+        removeChild(parent, child);
+        link(minNode, child);
+        child->marked = false;
+        if (parent->parent) {
+            if (!parent->marked) {
+                parent->marked = true;
+            } else {
+                cutAndCascadeCut(parent->parent, parent);
+            }
+        }
+    }
+
+    void removeChild(FibNode<T>* parent, FibNode<T>* child) {
+        parent->children.remove(child);
+        parent->degree--;
+    }
+
+    void consolidate() {
+        std::map<int, FibNode<T>*> degreeMap;
+        std::list<FibNode<T>*> nodes;
+        if (minNode) {
+            nodes.push_back(minNode);
+            for (auto child : minNode->children) {
+                nodes.push_back(child);
+            }
+        }
+        for (auto node : nodes) {
+            int degree = node->degree;
+            while (degreeMap.count(degree)) {
+                FibNode<T>* other = degreeMap[degree];
+                if (node->key > other->key) {
+                    std::swap(node, other);
+                }
+                link(node, other);
+                degreeMap.erase(degree++);
+            }
+            degreeMap[degree] = node;
+        }
+        minNode = nullptr;
+        for (auto pair : degreeMap) {
+            link(minNode, pair.second);
+            if (!minNode || pair.second->key < minNode->key) {
+                minNode = pair.second;
+            }
+        }
+    }
+};
+
+int main() {
+    FibonacciHeap<int> fibHeap;
+    fibHeap.insert(10);
+    fibHeap.insert(5);
+    fibHeap.insert(15);
+    std::cout << fibHeap.findMin() << std::endl;       // Выведет 5
+    std::cout << fibHeap.extractMin() << std::endl;    // Выведет 5
+    return 0;
+}
+
+
+
+ХЭШ-ТАБЛИЦА
+  #include <iostream>
+#include <unordered_map>
+
+// Простая реализация хэш-таблицы с использованием unordered_map
+class HashTable {
+private:
+    std::unordered_map<std::string, int> table;
+
+public:
+    void put(const std::string &key, int value) {
+        table[key] = value;
+    }
+
+    int get(const std::string &key) {
+        auto found = table.find(key);
+        return (found != table.end()) ? found->second : -1;  // Возвращает -1, если ключ не найден
+    }
+
+    bool contains(const std::string &key) {
+        return table.find(key) != table.end();
+    }
+
+    void remove(const std::string &key) {
+        table.erase(key);
+    }
+};
+
+int main() {
+    HashTable ht;
+    ht.put("apple", 10);
+    ht.put("banana", 20);
+    std::cout << ht.get("apple") << std::endl;  // вывод: 10
+    std::cout << ht.contains("cherry") << std::endl;  // вывод: 0 (false)
+    ht.remove("banana");
+    std::cout << ht.get("banana") << std::endl;  // вывод: -1
+    return 0;
+}
