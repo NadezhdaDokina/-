@@ -1,1 +1,246 @@
+БИНАРНАЯ КУЧА
 
+import heapq
+
+# Создание пустой минимально-ориентированной кучи
+my_heap = []
+
+# Добавление элемента в кучу
+heapq.heappush(my_heap, 10)
+heapq.heappush(my_heap, 8)
+heapq.heappush(my_heap, 15)
+
+# Получение наименьшего элемента
+print("Min element:", my_heap[0])
+
+# Извлечение и удаление наименьшего элемента
+smallest = heapq.heappop(my_heap)
+print("Popped smallest element:", smallest)
+
+
+
+БИНОМИНАЛЬНАЯ КУЧА
+
+class Node:
+    def __init__(self, key):
+        self.key = key
+        self.children = []
+        self.order = 0
+
+def merge_trees(x, y):
+    if x.key > y.key:
+        x, y = y, x
+    y.parent = x
+    x.children.append(y)
+    x.order += 1
+    return x
+
+class BinomialHeap:
+    def __init__(self):
+        self.trees = []
+
+    def insert(self, key):
+        node = Node(key)
+        temp_heap = BinomialHeap()
+        temp_heap.trees.append(node)
+        self.union(temp_heap)
+
+    def union(self, other):
+        merged = []
+        i = j = 0
+        while i < len(self.trees) and j < len(other.trees):
+            if self.trees[i].order < other.trees[j].order:
+                merged.append(self.trees[i])
+                i += 1
+            elif self.trees[i].order > other.trees[j].order:
+                merged.append(other.trees[j])
+                j += 1
+            else:
+                # Объединяем деревья одинаковой степени
+                merged_tree = merge_trees(self.trees[i], other.trees[j])
+                merged.append(merged_tree)
+                i += 1
+                j += 1
+        # Добавляем оставшиеся деревья
+        while i < len(self.trees):
+            merged.append(self.trees[i])
+            i += 1
+        while j < len(other.trees):
+            merged.append(other.trees[j])
+            j += 1
+        self.trees = merged
+
+    def extract_min(self):
+        if not self.trees:
+            raise Exception('Heap is empty')
+        min_node = None
+        for tree in self.trees:
+            if min_node is None or tree.key < min_node.key:
+                min_node = tree
+        index = self.trees.index(min_node)
+        del self.trees[index]
+        h = BinomialHeap()
+        for child in min_node.children:
+            h.insert(child.key)
+        self.union(h)
+        return min_node.key
+
+if __name__ == "__main__":
+    bh = BinomialHeap()
+    bh.insert(10)
+    bh.insert(5)
+    bh.insert(15)
+    print(bh.extract_min())  # Выведет 5
+
+
+
+КУЧА ФИБОНАЧЧИ
+
+class FibNode:
+    def __init__(self, key):
+        self.key = key
+        self.children = []
+        self.marked = False
+        self.parent = None
+        self.degree = 0
+
+class FibonacciHeap:
+    def __init__(self):
+        self.min_node = None
+        self.num_nodes = 0
+
+    def insert(self, key):
+        new_node = FibNode(key)
+        if self.min_node is None:
+            self.min_node = new_node
+        else:
+            self._link_nodes(self.min_node, new_node)
+            if new_node.key < self.min_node.key:
+                self.min_node = new_node
+        self.num_nodes += 1
+
+    def _link_nodes(self, parent, child):
+        parent.children.append(child)
+        child.parent = parent
+        parent.degree += 1
+
+    def find_min(self):
+        return self.min_node.key if self.min_node else None
+
+    def extract_min(self):
+        z = self.min_node
+        if z is not None:
+            for child in z.children[:]:
+                self._remove_child(z, child)
+                self._add_to_root_list(child)
+            self._consolidate()
+            self.num_nodes -= 1
+        return z.key if z else None
+
+    def decrease_key(self, node, new_key):
+        if new_key >= node.key:
+            raise ValueError("New key must be smaller than the old one")
+        node.key = new_key
+        parent = node.parent
+        if parent is not None and node.key < parent.key:
+            self._cut_and_cascading_cut(parent, node)
+        if node.key < self.min_node.key:
+            self.min_node = node
+
+    def _cut_and_cascading_cut(self, parent, child):
+        self._remove_child(parent, child)
+        self._add_to_root_list(child)
+        child.marked = False
+        grandparent = parent.parent
+        if grandparent is not None:
+            if not parent.marked:
+                parent.marked = True
+            else:
+                self._cut_and_cascading_cut(grandparent, parent)
+
+    def _remove_child(self, parent, child):
+        parent.children.remove(child)
+        parent.degree -= 1
+
+    def _add_to_root_list(self, node):
+        if self.min_node is None:
+            self.min_node = node
+        else:
+            self._link_nodes(self.min_node, node)
+            if node.key < self.min_node.key:
+                self.min_node = node
+
+    def _consolidate(self):
+        degrees = {}
+        root_list = [node for node in self._traverse_root_list()]
+        for w in root_list:
+            d = w.degree
+            while d in degrees:
+                y = degrees[d]
+                if w.key > y.key:
+                    w, y = y, w
+                self._link_nodes(w, y)
+                del degrees[d]
+                d += 1
+            degrees[d] = w
+        self.min_node = None
+        for node in degrees.values():
+            if self.min_node is None or node.key < self.min_node.key:
+                self.min_node = node
+
+    def _traverse_root_list(self):
+        if self.min_node is None:
+            yield from ()
+        else:
+            current = self.min_node
+            while True:
+                yield current
+                next_node = current.next
+                if next_node == self.min_node:
+                    break
+                current = next_node
+
+
+if __name__ == "__main__":
+    fh = FibonacciHeap()
+    fh.insert(10)
+    fh.insert(5)
+    fh.insert(15)
+    print(fh.find_min())   # Выведет 5
+    print(fh.extract_min())  # Выведет 5
+
+
+
+
+ХЭШ-ТАБЛИЦА
+
+# Простая демонстрация хэш-таблицы на Python
+class HashTable:
+    def __init__(self):
+        self.table = {}  # Внутренняя таблица — словарь Python
+
+    def put(self, key, value):
+        """Добавляет пару 'ключ-значение'"""
+        self.table[key] = value
+
+    def get(self, key):
+        """Получает значение по ключу"""
+        return self.table.get(key, None)
+
+    def contains(self, key):
+        """Проверяет наличие ключа в таблице"""
+        return key in self.table
+
+    def remove(self, key):
+        """Удаляет элемент по ключу"""
+        if key in self.table:
+            del self.table[key]
+
+# Тестирование
+ht = HashTable()
+ht.put("apple", 10)
+ht.put("banana", 20)
+print(ht.get("apple"))  # выводит 10
+print(ht.contains("cherry"))  # выводит False
+ht.remove("banana")
+print(ht.get("banana"))  # выводит None
