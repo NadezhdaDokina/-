@@ -1,1 +1,109 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+#include <algorithm>
 
+using namespace std;
+
+// Функция для вычисления длины маршрута
+int calculatePathLength(const vector<int>& path, const vector<vector<int>>& dist) {
+    int length = 0;
+    for (int i = 0; i < path.size() - 1; ++i) {
+        length += dist[path[i]][path[i + 1]];
+    }
+    // Возвращаемся в начальную точку (замкнутый маршрут)
+    length += dist[path.back()][path[0]];
+    return length;
+}
+
+// 2-opt алгоритм для оптимизации маршрута (TSP)
+vector<int> twoOpt(vector<int> path, const vector<vector<int>>& dist) {
+    bool improved = true;
+    int pathLength = calculatePathLength(path, dist);
+
+    while (improved) {
+        improved = false;
+        for (int i = 1; i < path.size() - 2; i++) {
+            for (int j = i + 1; j < path.size() - 1; j++) {
+                // Создаем новый маршрут с перестановкой между i и j
+                vector<int> newPath = path;
+                // Разворот участка между i и j
+                reverse(newPath.begin() + i, newPath.begin() + j + 1);
+                
+                int newLength = calculatePathLength(newPath, dist);
+                
+                // Если новый маршрут короче — принимаем его
+                if (newLength < pathLength) {
+                    path = newPath;
+                    pathLength = newLength;
+                    improved = true;
+                    // После улучшения начинаем проверку заново
+                    break;
+                }
+            }
+            if (improved) break;
+        }
+    }
+    return path;
+}
+
+int main() {
+    int n;
+    cout << "Введите количество городов: ";
+    cin >> n;
+
+    // Ввод матрицы расстояний
+    vector<vector<int>> dist(n, vector<int>(n));
+    cout << "Введите матрицу расстояний (n x n):" << endl;
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < n; ++j) {
+            cin >> dist[i][j];
+        }
+    }
+
+    // Начальный маршрут (в порядке ввода: 0 → 1 → 2 → ... → n-1 → 0)
+    vector<int> initialPath(n);
+    for (int i = 0; i < n; ++i) {
+        initialPath[i] = i;
+    }
+
+    cout << "Начальный маршрут: ";
+    for (int city : initialPath) {
+        cout << city << " ";
+    }
+    cout << endl;
+    cout << "Длина начального маршрута: " 
+         << calculatePathLength(initialPath, dist) << endl;
+
+    // Оптимизация маршрута
+    vector<int> optimizedPath = twoOpt(initialPath, dist);
+
+    cout << "Оптимизированный маршрут: ";
+    for (int city : optimizedPath) {
+        cout << city << " ";
+    }
+    cout << endl;
+    cout << "Длина оптимизированного маршрута: "
+         << calculatePathLength(optimizedPath, dist) << endl;
+
+    return 0;
+}
+
+
+
+
+Введите количество городов: 3
+Введите матрицу расстояний (n x n):
+1
+2
+3
+4
+5
+6
+7
+8
+9
+Начальный маршрут: 0 1 2 
+Длина начального маршрута: 15
+Оптимизированный маршрут: 0 1 2 
+Длина оптимизированного маршрута: 15
